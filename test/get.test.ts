@@ -9,16 +9,18 @@ const expect = Chai.expect;
 describe('Get(path: string | string[]) >> ', () => {
     describe('Level 0 >> ', () => {
         it('path: undefined', () => {
-            const ob = new Observable(basicObject);
+            const inital = basicObject();
+            const ob = new Observable(inital);
 
             const observed = ob.get();
 
             expect(observed instanceof Observable).to.be.true;
-            expect(observed.toJS()).to.deep.equal(basicObject);
+            expect(observed.toJS()).to.deep.equal(inital);
         });
 
         it('path: null', () => {
-            const ob = new Observable(basicObject);
+            const inital = basicObject();
+            const ob = new Observable(inital);
 
             expect(() => {
                 ob.get(null);
@@ -26,80 +28,88 @@ describe('Get(path: string | string[]) >> ', () => {
         });
 
         it('path: empty string', () => {
-            const ob = new Observable(basicObject);
+            const inital = basicObject();
+            const ob = new Observable(inital);
 
             const observed = ob.get('');
 
             expect(observed instanceof Observable).to.be.true;
-            expect(observed.toJS()).to.deep.equal(basicObject);
+            expect(observed.toJS()).to.deep.equal(inital);
         });
 
         it('path: empty array', () => {
-            const ob = new Observable(basicObject);
+            const inital = basicObject();
+            const ob = new Observable(inital);
 
             const observed = ob.get([]);
 
             expect(observed instanceof Observable).to.be.true;
-            expect(observed.toJS()).to.deep.equal(basicObject);
+            expect(observed.toJS()).to.deep.equal(inital);
         });
     });
 
     describe('Level 1 >> ', () => {
         describe('path: string', () => {
             it('returns scalar >> ', () => {
-                const ob = new Observable(basicObject);
+                const inital = basicObject();
+                const ob = new Observable(inital);
 
                 const observed = ob.get('num');
 
                 expect(observed instanceof Observable).to.be.true;
-                expect(observed.toJS()).to.deep.equal(basicObject.num);
+                expect(observed.toJS()).to.deep.equal(inital.num);
             });
 
             it('returns object >> ', () => {
-                const ob = new Observable(basicObject);
+                const inital = basicObject();
+                const ob = new Observable(inital);
 
                 const observed = ob.get('obj');
 
                 expect(observed instanceof Observable).to.be.true;
-                expect(observed.toJS()).to.deep.equal(basicObject.obj);
+                expect(observed.toJS()).to.deep.equal(inital.obj);
             });
 
             it('returns array >> ', () => {
-                const ob = new Observable(basicObject);
+                const inital = basicObject();
+                const ob = new Observable(inital);
 
                 const observed = ob.get('arr');
 
                 expect(observed instanceof Observable).to.be.true;
-                expect(observed.toJS()).to.deep.equal(basicObject.arr);
+                expect(observed.toJS()).to.deep.equal(inital.arr);
             });
         });
 
         describe('path: array', () => {
             it('returns scalar >> ', () => {
-                const ob = new Observable(basicObject);
+                const inital = basicObject();
+                const ob = new Observable(inital);
 
                 const observed = ob.get(['num']);
 
                 expect(observed instanceof Observable).to.be.true;
-                expect(observed.toJS()).to.deep.equal(basicObject.num);
+                expect(observed.toJS()).to.deep.equal(inital.num);
             });
 
             it('returns object >> ', () => {
-                const ob = new Observable(basicObject);
+                const inital = basicObject();
+                const ob = new Observable(inital);
 
                 const observed = ob.get(['obj']);
 
                 expect(observed instanceof Observable).to.be.true;
-                expect(observed.toJS()).to.deep.equal(basicObject.obj);
+                expect(observed.toJS()).to.deep.equal(inital.obj);
             });
 
             it('returns array >> ', () => {
-                const ob = new Observable(basicObject);
+                const inital = basicObject();
+                const ob = new Observable(inital);
 
                 const observed = ob.get(['arr']);
 
                 expect(observed instanceof Observable).to.be.true;
-                expect(observed.toJS()).to.deep.equal(basicObject.arr);
+                expect(observed.toJS()).to.deep.equal(inital.arr);
             });
         });
     });
@@ -107,59 +117,65 @@ describe('Get(path: string | string[]) >> ', () => {
     describe('Level 2 >> ', () => {
         describe('path: string', () => {
             it('returns scalar >> ', () => {
-                const ob = new Observable(basicObject);
+                const inital = basicObject();
+                const ob = new Observable(inital);
 
                 const observed = ob.get('obj.num');
 
                 expect(observed instanceof Observable).to.be.true;
-                expect(observed.toJS()).to.deep.equal(basicObject.obj.num);
+                expect(observed.toJS()).to.deep.equal(inital.obj.num);
             });
 
             it('returns object >> ', () => {
-                const ob = new Observable(basicObject);
+                const inital = basicObject();
+                const ob = new Observable(inital);
 
                 const observed = ob.get('obj.obj');
 
                 expect(observed instanceof Observable).to.be.true;
-                expect(observed.toJS()).to.deep.equal(basicObject.obj.obj);
+                expect(observed.toJS()).to.deep.equal(inital.obj.obj);
             });
 
             it('returns array item >> ', () => {
-                const ob = new Observable(basicObject);
+                const inital = basicObject();
+                const ob = new Observable(inital);
 
                 const observed = ob.get('arr.2');
 
                 expect(observed instanceof Observable).to.be.true;
-                expect(observed.toJS()).to.deep.equal(basicObject.arr[2]);
+                expect(observed.toJS()).to.deep.equal(inital.arr[2]);
             });
         });
 
         describe('path: array', () => {
             it('returns scalar >> ', () => {
-                const ob = new Observable(basicObject);
+                const inital = basicObject();
+                const ob = new Observable(inital);
 
                 const observed = ob.get(['obj', 'num']);
 
                 expect(observed instanceof Observable).to.be.true;
-                expect(observed.toJS()).to.deep.equal(basicObject.obj.num);
+                expect(observed.toJS()).to.deep.equal(inital.obj.num);
             });
 
             it('returns object >> ', () => {
-                const ob = new Observable(basicObject);
+                const inital = basicObject();
+                const ob = new Observable(inital);
 
                 const observed = ob.get(['obj', 'obj']);
 
                 expect(observed instanceof Observable).to.be.true;
-                expect(observed.toJS()).to.deep.equal(basicObject.obj.obj);
+                expect(observed.toJS()).to.deep.equal(inital.obj.obj);
             });
 
             it('returns array item >> ', () => {
-                const ob = new Observable(basicObject);
+                const inital = basicObject();
+                const ob = new Observable(inital);
 
                 const observed = ob.get(['arr', '2']);
 
                 expect(observed instanceof Observable).to.be.true;
-                expect(observed.toJS()).to.deep.equal(basicObject.arr[2]);
+                expect(observed.toJS()).to.deep.equal(inital.arr[2]);
             });
         });
     });
@@ -167,41 +183,45 @@ describe('Get(path: string | string[]) >> ', () => {
     describe('Level 3 >> ', () => {
         describe('path: string', () => {
             it('returns scalar >> ', () => {
-                const ob = new Observable(basicObject);
+                const inital = basicObject();
+                const ob = new Observable(inital);
 
                 const observed = ob.get('obj.obj.num');
 
                 expect(observed instanceof Observable).to.be.true;
-                expect(observed.toJS()).to.deep.equal(basicObject.obj.obj.num);
+                expect(observed.toJS()).to.deep.equal(inital.obj.obj.num);
             });
 
             it('returns array item >> ', () => {
-                const ob = new Observable(basicObject);
+                const inital = basicObject();
+                const ob = new Observable(inital);
 
                 const observed = ob.get('arr.5.num');
 
                 expect(observed instanceof Observable).to.be.true;
-                expect(observed.toJS()).to.deep.equal(basicObject.arr[5].num);
+                expect(observed.toJS()).to.deep.equal(inital.arr[5].num);
             });
         });
 
         describe('path: array', () => {
             it('returns scalar >> ', () => {
-                const ob = new Observable(basicObject);
+                const inital = basicObject();
+                const ob = new Observable(inital);
 
                 const observed = ob.get(['obj', 'obj', 'num']);
 
                 expect(observed instanceof Observable).to.be.true;
-                expect(observed.toJS()).to.deep.equal(basicObject.obj.obj.num);
+                expect(observed.toJS()).to.deep.equal(inital.obj.obj.num);
             });
 
             it('returns array item >> ', () => {
-                const ob = new Observable(basicObject);
+                const inital = basicObject();
+                const ob = new Observable(inital);
 
                 const observed = ob.get(['arr', '5', 'num']);
 
                 expect(observed instanceof Observable).to.be.true;
-                expect(observed.toJS()).to.deep.equal(basicObject.arr[5].num);
+                expect(observed.toJS()).to.deep.equal(inital.arr[5].num);
             });
         });
     });

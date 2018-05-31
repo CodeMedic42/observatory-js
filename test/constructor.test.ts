@@ -27,15 +27,17 @@ describe('Constructor(value: any) >> ', () => {
     });
 
     it('object', () => {
-      const ob = new Observable(basicObject);
+      const inital = basicObject();
+      const ob = new Observable(inital);
 
-      expect(ob.toJS()).to.deep.equal(basicObject);
+      expect(ob.toJS()).to.deep.equal(inital);
     });
 
     it('array', () => {
-      const ob = new Observable(basicArray);
+      const inital = basicArray();
+      const ob = new Observable(inital);
 
-      expect(ob.toJS()).to.deep.equal(basicArray);
+      expect(ob.toJS()).to.deep.equal(inital);
     });
   });
 

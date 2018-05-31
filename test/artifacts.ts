@@ -1,5 +1,4 @@
-import Sinon = require('sinon');
-import _ = require('lodash');
+import cloneDeep = require('lodash/cloneDeep');
 import randomize = require('randomatic');
 import seedrandom = require('seedrandom');
 
@@ -61,22 +60,20 @@ function buildArray(obj?: any, arr?: any[]) {
     return val;
 }
 
-const lev2Obj = buildObject();
+const _lev2Obj = buildObject();
 
-const lev1Obj = buildObject(lev2Obj, buildArray());
+const _lev1Obj = buildObject(_lev2Obj, buildArray());
 
-const basicArray = buildArray(buildObject(), buildArray());
+const _basicArray = buildArray(buildObject(), buildArray());
 
-const basicObject = buildObject(lev1Obj, basicArray);
+const _basicObject = buildObject(_lev1Obj, _basicArray);
 
-function createOnChangeSpy(targetOb) {
-    targetOb.on();
+const basicObject = () => {
+    return cloneDeep(_basicObject);
+};
 
-    const spy = Sinon.spy();
+const basicArray = () => {
+    return cloneDeep(_basicArray);
+};
 
-    targetOb.on('change', spy);
-
-    return spy;
-}
-
-export { basicObject, basicArray };
+export { basicObject, basicArray, buildObject, buildArray };
