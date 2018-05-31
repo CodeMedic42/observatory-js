@@ -6,6 +6,8 @@ import reduce = require('lodash/reduce');
 import get = require('lodash/get');
 import reduceRight = require('lodash/reduceRight');
 import replace = require('lodash/replace');
+import isPlainObject = require('lodash/isPlainObject');
+import isArray = require('lodash/isArray');
 
 import Observable from '../src/index';
 
@@ -38,8 +40,20 @@ function teststrap(initalValue, target, watchTarget, newValue) {
         const targetDiff = replace(target, watchTarget, '');
 
         const stop = watchTarget == null ? ob.watch(spy) : ob.watch(watchTarget, spy);
- 
-        set(initalValue, target, newValue);
+
+        const parentSpy = Sinon.spy();
+
+        const stopParent = ob.watch(parentSpy);
+
+        let finalRootValue = initalValue
+
+        if (target.length <= 0) {
+            finalRootValue = newValue;
+        } else if (isPlainObject(initalValue) || isArray(initalValue)) {
+            set(initalValue, target, newValue);
+        } else {
+            throw new Error('Cannot set a value to a path for a scalar.');
+        }
 
         let watched = null;
 
@@ -51,39 +65,59 @@ function teststrap(initalValue, target, watchTarget, newValue) {
             watched = newValue;
         }
 
-        // const expected = watchTarget.length > 0 ? get(initalValue, watchTarget) : newValue;
-
         ob.set(target, newValue);
 
         expect(spy.callCount).to.equal(1);
         expect(spy.args[0][0]).to.deep.equal(watched);
         expect(spy.args[0][1]).to.equal(targetDiff);
 
+        expect(parentSpy.callCount).to.equal(1);
+        expect(parentSpy.args[0][0]).to.deep.equal(finalRootValue);
+        expect(parentSpy.args[0][1]).to.equal(target);
+
         spy.resetHistory();
+        parentSpy.resetHistory();
 
         stop();
 
-        ob.set('hello');
+        const finalNewValue = 'blathering blatherskite'
+
+        if (target.length <= 0) {
+            finalRootValue = finalNewValue;
+        } else if (isPlainObject(initalValue) || isArray(initalValue)) {
+            set(initalValue, target, finalNewValue);
+        } else {
+            throw new Error('Cannot set a value to a path for a scalar.');
+        }
+
+        ob.set(target, finalNewValue);
 
         expect(spy.callCount).to.equal(0);
+
+        expect(parentSpy.callCount).to.equal(1);
+        expect(parentSpy.args[0][0]).to.deep.equal(finalRootValue);
+        expect(parentSpy.args[0][1]).to.equal(target);
     };
 }
 
-describe('watch(Function) >> ', () => {
+describe('watch(callback) >> ', () => {
     describe('direct change >> ', () => {
         describe('from scalar >> ', () => {
+            it('to null >> ', teststrap(true, '', '', null));
             it('to scalar >> ', teststrap(true, '', '', 42));
             it('to object >> ', teststrap(true, '', '', { foo: 'bar' }));
             it('to array >> ', teststrap(true, '', '', [42, null, 'test']));
         });
 
         describe('from object >> ', () => {
+            it('to null >> ', teststrap((basicObject()), '', '', null));
             it('to scalar >> ', teststrap((basicObject()), '', '', 42));
             it('to object >> ', teststrap(basicObject(), '', '', { foo: 'bar' }));
             it('to array >> ', teststrap(basicObject(), '', '', [42, null, 'test']));
         });
 
         describe('from array >> ', () => {
+            it('to null >> ', teststrap(basicArray(), '', '', null));
             it('to scalar >> ', teststrap(basicArray(), '', '', 42));
             it('to object >> ', teststrap(basicArray(), '', '', { foo: 'bar' }));
             it('to array with less items >> ', teststrap(basicArray(), '', '', [42, null, 'test']));
@@ -94,18 +128,21 @@ describe('watch(Function) >> ', () => {
     describe('indirect change >> ', () => {
         describe('through object change >> ', () => {
             describe('from scalar >> ', () => {
+                it('to null >> ', teststrap(basicObject(), 'str', '', null));
                 it('to scalar >> ', teststrap(basicObject(), 'str', '', 42));
                 it('to object >> ', teststrap(basicObject(), 'str', '', { foo: 'bar' }));
                 it('to array >> ', teststrap(basicObject(), 'str', '', [42, null, 'test']));
             });
 
             describe('from object >> ', () => {
+                it('to null >> ', teststrap(basicObject(), 'obj', '', null));
                 it('to scalar >> ', teststrap(basicObject(), 'obj', '', 42));
                 it('to object >> ', teststrap(basicObject(), 'obj', '', { foo: 'bar' }));
                 it('to array >> ', teststrap(basicObject(), 'obj', '', [42, null, 'test']));
             });
 
             describe('from arrary >> ', () => {
+                it('to null >> ', teststrap(basicObject(), 'arr', '', null));
                 it('to scalar >> ', teststrap(basicObject(), 'arr', '', 42));
                 it('to object >> ', teststrap(basicObject(), 'arr', '', { foo: 'bar' }));
                 it('to array >> ', teststrap(basicObject(), 'arr', '', [42, null, 'test']));
@@ -114,18 +151,21 @@ describe('watch(Function) >> ', () => {
 
         describe('through array change >>', () => {
             describe('from scalar >> ', () => {
+                it('to null >> ', teststrap(basicArray(), '0', '', null));
                 it('to scalar >> ', teststrap(basicArray(), '0', '', 42));
                 it('to object >> ', teststrap(basicArray(), '0', '', { foo: 'bar' }));
                 it('to array >> ', teststrap(basicArray(), '0', '', [42, null, 'test']));
             });
 
             describe('from object >> ', () => {
+                it('to null >> ', teststrap(basicArray(), '5', '', null));
                 it('to scalar >> ', teststrap(basicArray(), '5', '', 42));
                 it('to object >> ', teststrap(basicArray(), '5', '', { foo: 'bar' }));
                 it('to array >> ', teststrap(basicArray(), '5', '', [42, null, 'test']));
             });
 
             describe('from arrary >> ', () => {
+                it('to null >> ', teststrap(basicArray(), '6', '', null));
                 it('to scalar >> ', teststrap(basicArray(), '6', '', 42));
                 it('to object >> ', teststrap(basicArray(), '6', '', { foo: 'bar' }));
                 it('to array >> ', teststrap(basicArray(), '6', '', [42, null, 'test']));
@@ -135,5 +175,12 @@ describe('watch(Function) >> ', () => {
 });
 
 describe('watch(path, callback) >> ', () => {
-    it('scalar >> ', teststrap(basicObject(), 'num', 'num', 42));
+    describe('direct change >> ', () => {
+        describe('from scalar >> ', () => {
+            it('to null >> ', teststrap(basicObject(), 'num', 'num', null));
+            it('to scalar >> ', teststrap(basicObject(), 'num', 'num', 42));
+            it('to object >> ', teststrap(basicObject(), 'num', 'num', { foo: 'bar' }));
+            it('to array >> ', teststrap(basicObject(), 'num', 'num', [42, null, 'test']));
+        });
+    });
 });
