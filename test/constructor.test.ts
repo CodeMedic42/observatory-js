@@ -122,4 +122,18 @@ describe('Constructor(value: any) >> ', () => {
       });
     });
   });
+
+  describe('Circular data >> ', () => {
+    it('object', () => {
+      const inital = basicObject();
+
+      inital.obj.obj.circ = inital;
+
+      const ob = new Observable(inital);
+
+      const value: any = ob.toJS();
+
+      expect(value.obj.obj.circ === value).to.be.true;
+    });
+  })
 });

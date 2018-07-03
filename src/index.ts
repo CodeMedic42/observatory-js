@@ -9,17 +9,15 @@ import IsBoolean = require('lodash/isBoolean');
 import StartsWith = require('lodash/startsWith');
 import FindIndex = require('lodash/findIndex');
 import IsMatch = require('lodash/isMatch');
-import Initial = require('lodash/initial');
-import Set = require('lodash/set');
 import IsIndex = require('lodash/_isIndex');
 import ForEach = require('lodash/forEach');
 import IsEqual = require('lodash/isEqual');
 import ForOwn = require('lodash/forOwn');
-import Map = require('lodash/map');
-import Reduce = require('lodash/reduce');
 import Clone = require('lodash/clone');
 import events = require('events');
-import FaultLineJs = require('fault-line-js');
+import Symbol = require('es6-symbol');
+
+const procSym = Symbol('procSym');
 
 type simpleScalar = string | number | boolean | Date;
 
@@ -130,6 +128,8 @@ class Source extends events.EventEmitter {
     private type: string;
     private content: contentType;
     private value: simpleTypes;
+    private ref: simpleTypes;
+    private clean: simpleArray;
 
     constructor(value: simpleTypes) {
         super();
@@ -149,6 +149,8 @@ class Source extends events.EventEmitter {
         this.type = 'simple'
         this.content = null
         this.value = null;
+        this.ref = null;
+        this.clean = [];
 
         this.setContent(value);
 
@@ -220,7 +222,12 @@ class Source extends events.EventEmitter {
                 source = item.source;
             } else {
                 try {
-                    source = new Source(item);
+                    if (item != null && item[procSym] != null) {
+                        // This is where we handle circular links
+                        source = item[procSym];
+                    } else {
+                        source = new Source(item);
+                    }
                 } catch (err) {
                     err.message = `${err.message} @ ${name}`;
 
@@ -229,10 +236,20 @@ class Source extends events.EventEmitter {
             }
 
             this.linkSource(name, source);
+        } else if (item != null) {
+            if (item.source instanceof Source) {
+                content.source._set(item.source);
+            } else if (item[procSym] == null) {
+                content.source._set(item);
+            } else if (item[procSym] !== content.source) {
+                // This is where we handle circular links
+                // We do not want to call set or we will be in a loop
+                this.linkSource(name, item[procSym]);
+            } else {
+                throw new Error('Technically this should never happen');
+            }
         } else {
-            const updateWith = item != null && item.source instanceof Source ? item.source : item;
-
-            content.source._set(updateWith);
+            content.source._set(item);
         }
     }
 
@@ -273,6 +290,7 @@ class Source extends events.EventEmitter {
 
         this.content = newData;
         this.value = newData;
+        this.ref = newData;
         this.changePending = true;
     }
 
@@ -288,22 +306,38 @@ class Source extends events.EventEmitter {
 
     private setContent(newData) {
         if (IsPlainObject(newData)) {
+            if (newData[procSym]) {
+                throw new Error('Should not be processing processed data');
+            }
+
+            newData[procSym] = this;
+            this.clean.push(newData);
+
             if (this.type !== 'object') {
                 this.disengaugeCurrent();
 
                 this.content = {};
                 this.value = {};
                 this.type = 'object';
+                this.ref = undefined;
             }
 
             this.setAsObject(newData);
         } else if (IsArray(newData)) {
+            if (newData[procSym]) {
+                throw new Error('Should not be processing processed data');
+            }
+
+            newData[procSym] = this;
+            this.clean.push(newData);
+
             if (this.type !== 'array') {
                 this.disengaugeCurrent();
 
                 this.content = [];
                 this.value = [];
                 this.type = 'array';
+                this.ref = undefined;
             }
 
             this.setAsArray(newData);
@@ -311,7 +345,10 @@ class Source extends events.EventEmitter {
             if (this.type !== 'simple') {
                 this.disengaugeCurrent();
 
+                this.content = undefined;
                 this.type = 'simple';
+                this.value = undefined;
+                this.ref = undefined;
             }
 
             this.setAsSimple(newData);
@@ -396,10 +433,18 @@ class Source extends events.EventEmitter {
         this.isUpdating = false;
     }
 
+    private cleanUp() {
+        ForEach(this.clean, (item) => {
+            delete item[procSym];
+        });
+    }
+
     public set(value: simpleTypes, path: string[]): Source {
         const source: Source = this._get(path, true);
 
         source._set(value);
+
+        this.cleanUp();
 
         return source;
     }
@@ -417,68 +462,13 @@ class Source extends events.EventEmitter {
     }
 
     public watch(path: string[], callback: Function): () => void {
-        // todo: clean up all created watches when this source is destroied.
+        // todo: clean up all created watches when this source is destroyed.
         const watch = new Watch(path, this, callback);
 
         return () => {
             watch.dispose();
         }
     }
-
-    /*
-    public watch2(path: string[], callback: Function): Function {
-        const ownPath = Clone(path);
-
-        const setWatch = (source: Source, nextIndex: number): Function => {
-            let unsub = null;
-            let childUnsub = null;
-
-            if (ownPath.length <= nextIndex) {
-                unsub = source._watch(callback);
-            } else {
-                const nextId = ownPath[nextIndex];
-                let previous = undefined;
-
-                unsub = source._watch((value) => {
-                    const child = value[nextId];
-
-                    if (child === previous) {
-                        return;
-                    }
-
-                    if (child !== undefined) {
-                        const childSource = source.get([nextId]);
-
-                        childUnsub = setWatch(childSource, nextIndex + 1);
-                    } else {
-                        childUnsub();
-                        childUnsub = null;
-                    }
-                });
-
-                previous = source.value[nextId];
-
-                if (previous !== undefined) {
-                    const childSource = source.get([nextId]);
-
-                    childUnsub = setWatch(childSource, nextIndex + 1);
-                }
-            }
-
-            return () => {
-                unsub();
-                unsub = null;
-
-                if (childUnsub != null) {
-                    childUnsub();
-                    childUnsub = null;
-                }
-            };
-        };
-
-        return setWatch(this, 0);
-    }
-    */
 
     public toJS(): simpleTypes {
         return this.value;
@@ -566,19 +556,4 @@ export default class Observable {
 
         return source.toJS();
     }
-
-    /*
-
-    public push(value: any) {
-
-    }
-
-    public manipulate(manipulator: (input: any) => any): Observable {
-        const current: any = this.toJS();
-
-        const result: any = manipulator(current);
-
-        return this.set(current);
-    }
-    */
 }

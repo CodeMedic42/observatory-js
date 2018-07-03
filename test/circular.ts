@@ -13,7 +13,7 @@ import { basicObject, basicArray } from './artifacts';
 
 const expect = Chai.expect;
 
-describe('watch(Function) >> ', () => {
+xdescribe('watch(Function) >> ', () => {
     it('to scalar >> ', () => {
         const c = {
             a: {
@@ -28,7 +28,7 @@ describe('watch(Function) >> ', () => {
         const b = a.b;
 
         set(a, '', {
-            
+
         });
     });
 });
