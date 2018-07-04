@@ -11,7 +11,7 @@ import isArray = require('lodash/isArray');
 
 import Observable from '../src/index';
 
-import { basicObject, basicArray } from './artifacts';
+import { basicObject, basicArray, buildCircularObject } from './artifacts';
 
 const expect = Chai.expect;
 
@@ -29,7 +29,7 @@ function debug(context, ...args) {
     }
 }
 
-function teststrap(initalValue, target, watchTarget, newValue) {
+function teststrap(initalValue, target, watchTarget, newValue, from = null) {
     return function test() {
         // debug(this, 'watch(Function)', 'indirect change', 'through object change', 'from scalar', 'to scalar');
         // debug(this, 'watch(Function)', 'direct change', 'from scalar', 'to scalar');
@@ -37,7 +37,7 @@ function teststrap(initalValue, target, watchTarget, newValue) {
 
         const spy = Sinon.spy();
 
-        const targetDiff = replace(target, watchTarget, '');
+        const targetDiff = from != null ? from : replace(target, watchTarget, '');
 
         const stop = watchTarget == null ? ob.watch(spy) : ob.watch(watchTarget, spy);
 
@@ -73,7 +73,7 @@ function teststrap(initalValue, target, watchTarget, newValue) {
 
         expect(parentSpy.callCount).to.equal(1);
         expect(parentSpy.args[0][0]).to.deep.equal(finalRootValue);
-        expect(parentSpy.args[0][1]).to.equal(target);
+        expect(parentSpy.args[0][1]).to.equal(from != null ? from : target);
 
         spy.resetHistory();
         parentSpy.resetHistory();
@@ -96,11 +96,11 @@ function teststrap(initalValue, target, watchTarget, newValue) {
 
         expect(parentSpy.callCount).to.equal(1);
         expect(parentSpy.args[0][0]).to.deep.equal(finalRootValue);
-        expect(parentSpy.args[0][1]).to.equal(target);
+        expect(parentSpy.args[0][1]).to.equal(from != null ? from : target);
     };
 }
 
-describe('watch(callback) >> ', () => {
+xdescribe('watch(callback) >> ', () => {
     describe('direct change >> ', () => {
         describe('from scalar >> ', () => {
             it('to null >> ', teststrap(true, '', '', null));
@@ -175,12 +175,20 @@ describe('watch(callback) >> ', () => {
 });
 
 describe('watch(path, callback) >> ', () => {
-    describe('direct change >> ', () => {
+    xdescribe('direct change >> ', () => {
         describe('from scalar >> ', () => {
             it('to null >> ', teststrap(basicObject(), 'num', 'num', null));
             it('to scalar >> ', teststrap(basicObject(), 'num', 'num', 42));
             it('to object >> ', teststrap(basicObject(), 'num', 'num', { foo: 'bar' }));
             it('to array >> ', teststrap(basicObject(), 'num', 'num', [42, null, 'test']));
+        });
+    });
+
+    describe('indirect change >> ', () => {
+        describe('through circular obj >> ', () => {
+            describe('from scalar >> ', () => {
+                it('to scalar >> ', teststrap(buildCircularObject(), 'obj.obj.circ.num', '', 42, 'num'));
+            });
         });
     });
 });

@@ -60,8 +60,8 @@ class Watch {
         let childUnsub = null;
 
         if (this.path.length <= nextIndex) {
-            unsub = source.listen('change', (...args) => {
-                this.callback(...args);
+            unsub = source.listen('change', (context, value, from) => {
+                this.callback(value, from);
             });
         } else {
             const nextId = this.path[nextIndex];
@@ -130,6 +130,7 @@ class Source extends events.EventEmitter {
     private value: simpleTypes;
     private ref: simpleTypes;
     private clean: simpleArray;
+    private updateContexts: {};
 
     constructor(value: simpleTypes) {
         super();
@@ -151,13 +152,14 @@ class Source extends events.EventEmitter {
         this.value = null;
         this.ref = null;
         this.clean = [];
+        this.updateContexts = {};
 
-        this.setContent(value);
+        this.setContent(Symbol('procSym'), value);
 
         this.changePending = false;
     }
 
-    private send(value, from, force?: boolean) {
+    private send(updateContext: any, value: simpleTypes, from: string, force?: boolean) {
         if (this.isUpdating && !force) {
             return;
         }
@@ -166,7 +168,7 @@ class Source extends events.EventEmitter {
             this.changePending = false;
 
             // Deep change
-            this.emit('change', value, from);
+            this.emit('change', updateContext, value, from);
         }
     }
 
@@ -178,14 +180,23 @@ class Source extends events.EventEmitter {
 
         this.changePending = true;
 
-        let changeListener = (value, from) => {
+        // The purpose of this listener is to update the source when a child changes.
+        let changeListener = (updateContext, value, from) => {
+            if (this.updateContexts[updateContext] != null) {
+                return;
+            }
+
+            this.updateContexts[updateContext] = true;
+
             this.value[name] = content.source.value;
 
             this.changePending = true;
 
             const fromChild = from.length === 0 ? name : `${name}.${from}`;
 
-            this.send(this.value, fromChild);
+            this.send(updateContext, this.value, fromChild);
+
+            delete this.updateContexts[updateContext];
         };
 
         let replaceListener = (replacement) => {
@@ -210,7 +221,7 @@ class Source extends events.EventEmitter {
         content.source.on('replace', replaceListener);
     }
 
-    private setupObjectItem(item, name) {
+    private setupObjectItem(updateContext, item, name) {
         let content = this.content[name];
 
         if (content == null) {
@@ -238,9 +249,9 @@ class Source extends events.EventEmitter {
             this.linkSource(name, source);
         } else if (item != null) {
             if (item.source instanceof Source) {
-                content.source._set(item.source);
+                content.source._set(updateContext, item.source);
             } else if (item[procSym] == null) {
-                content.source._set(item);
+                content.source._set(updateContext, item);
             } else if (item[procSym] !== content.source) {
                 // This is where we handle circular links
                 // We do not want to call set or we will be in a loop
@@ -249,12 +260,12 @@ class Source extends events.EventEmitter {
                 throw new Error('Technically this should never happen');
             }
         } else {
-            content.source._set(item);
+            content.source._set(updateContext, item);
         }
     }
 
-    private setAsObject(newData) {
-        ForOwn(this.content, (existingItem, name) => {
+    private setAsObject(updateContext, newData) {
+        ForOwn(this.content, (existingItem: any, name) => {
             if (newData[name] != null) {
                 return;
             }
@@ -266,11 +277,11 @@ class Source extends events.EventEmitter {
         });
 
         ForOwn(newData, (item, name) => {
-            this.setupObjectItem(item, name);
+            this.setupObjectItem(updateContext, item, name);
         });
     }
 
-    private setAsArray(newData) {
+    private setAsArray(updateContext, newData) {
         const contentArray = this.content as contentArrayType;
 
         while (contentArray.length > newData.length) {
@@ -279,7 +290,7 @@ class Source extends events.EventEmitter {
         }
 
         ForOwn(newData, (item, name) => {
-            this.setupObjectItem(item, name);
+            this.setupObjectItem(updateContext, item, name);
         });
     }
 
@@ -299,12 +310,12 @@ class Source extends events.EventEmitter {
             return;
         }
 
-        ForEach(this.content, (item) => {
+        ForEach(this.content, (item: any) => {
             item.disenguage();
         });
     }
 
-    private setContent(newData) {
+    private setContent(updateContext, newData) {
         if (IsPlainObject(newData)) {
             if (newData[procSym]) {
                 throw new Error('Should not be processing processed data');
@@ -322,7 +333,7 @@ class Source extends events.EventEmitter {
                 this.ref = undefined;
             }
 
-            this.setAsObject(newData);
+            this.setAsObject(updateContext, newData);
         } else if (IsArray(newData)) {
             if (newData[procSym]) {
                 throw new Error('Should not be processing processed data');
@@ -340,7 +351,7 @@ class Source extends events.EventEmitter {
                 this.ref = undefined;
             }
 
-            this.setAsArray(newData);
+            this.setAsArray(updateContext, newData);
         } else if (!IsObject(newData) || IsDate(newData) || newData === null) {
             if (this.type !== 'simple') {
                 this.disengaugeCurrent();
@@ -411,7 +422,7 @@ class Source extends events.EventEmitter {
         return current;
     }
 
-    private _set(value: simpleTypes | Source) {
+    private _set(updateContext: any, value: simpleTypes | Source) {
         if (value === this) {
             return;
         }
@@ -421,10 +432,10 @@ class Source extends events.EventEmitter {
         const replace = value instanceof Source;
         const newData = replace ? (value as Source).content : value;
 
-        this.setContent(newData);
+        this.setContent(updateContext, newData);
 
         // emit before replacing to keep incoming controls from firing.
-        this.send(this.value, '', true);
+        this.send(updateContext, this.value, '', true);
 
         if (replace) {
             (value as Source).emit('replace', this);
@@ -442,7 +453,7 @@ class Source extends events.EventEmitter {
     public set(value: simpleTypes, path: string[]): Source {
         const source: Source = this._get(path, true);
 
-        source._set(value);
+        source._set(Symbol('procSym'), value);
 
         this.cleanUp();
 

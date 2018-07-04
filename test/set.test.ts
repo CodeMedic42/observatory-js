@@ -6,7 +6,7 @@ import { basicObject, basicArray } from './artifacts';
 
 const expect = Chai.expect;
 
-describe('Set(value: any, path: string | string[]) >> ', () => {
+xdescribe('Set(value: any, path: string | string[]) >> ', () => {
     describe('value: null', () => {
         describe('Level 0 >> ', () => {
             it('path: undefined', () => {

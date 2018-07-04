@@ -76,4 +76,12 @@ const basicArray = () => {
     return cloneDeep(_basicArray);
 };
 
-export { basicObject, basicArray, buildObject, buildArray };
+function buildCircularObject() {
+    const circularObject = cloneDeep(_basicObject);
+
+    circularObject.obj.obj.circ = circularObject;
+
+    return circularObject;
+}
+
+export { basicObject, basicArray, buildObject, buildArray, buildCircularObject };

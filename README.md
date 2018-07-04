@@ -1,22 +1,29 @@
 # Observatory-JS
 
-Observatory-JS is a Javascript library which atempts to provide a simple and easy to use API for watching data changes.
+Observatory-JS is a Javascript library which atempts to provide a simple and easy to use API for watching data changes. Being able to respond to changes in your data allows for a more robust system. This library is an attempt to solve a few issues which I feel have not been answered well.
+
+1. I want to be able to use any structure of data I want.
+    - This generally means one minute I am observing an object and the next an array. No type checking. There is a limit in this library to simple objects, arrays, and scalar values, ... for now.
+2. I want to be able to observe the changes to data from any particular point.
+    - Basiclly if I have a complex tree of data I want to be able to observe the changes of a child from the viewpoint of another child who is at least parent to the first. We will see examples of this later.
+3. CIRCULAR REFERENCES
+    - When creating an observable and setting data I want reference structrure to be maintained. Yes circular references are gennerally bad. I am hard pressed to to really think of a use case where this is ok or possibly expected. But who am I to COMPLETELY say one does not exist. Plus it's a good challenge. Also I would have to check for it anyway or try to prevent it. Why write code to stop something when you can roll with it. FEATURE! Oh and yes events do not circle.
 
 ## Development in this project
 
-If you want to build this repo or run tests first run(one time only)
+If you want to build this repo or run tests just install the packages _(one time only)_
 
 ```bash
 npm install
 ```
 
-### Build
+If you want to build...
 
 ```bash
 npm run build
 ```
 
-### Test
+If you want to test...
 
 ```bash
 npm run test
@@ -32,6 +39,8 @@ To use this library just run
 npm install observatory-js --save
 ```
 
+... or yarn or whatever you prefer of course.
+
 ### Usage
 
 To use this library you only need to import a simple class
@@ -45,6 +54,8 @@ var Observable = require('observatory-js');
 ```
 
 The rest of this read me are some common examples of usage. 
+
+## Examples
 
 Here is exampe data which will be used to illustrate the following examples.
 ```js
@@ -130,7 +141,7 @@ const actualPersonValue = observed.toJS('person');
 ```
 
 Please not that changing the data returned from toJS will NOT reflect back into the observable and will NOT result in events being called.
-Conversly after getting data from toJS and the calling observable.set(...) will not update the data you already have. You will have to call toJS again.
+Conversly after getting data from toJS and the calling observable.set(...) will not update the data you already have. You will have to call toJS again. I am cloning inside to prevent this. Sorry.
 
 #### Watching
 

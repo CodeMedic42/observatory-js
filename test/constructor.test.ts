@@ -2,7 +2,7 @@ import Chai = require('chai');
 
 import Observable from '../src/index';
 
-import { basicObject, basicArray } from './artifacts';
+import { basicObject, basicArray, buildCircularObject } from './artifacts';
 
 const expect = Chai.expect;
 
@@ -125,9 +125,7 @@ describe('Constructor(value: any) >> ', () => {
 
   describe('Circular data >> ', () => {
     it('object', () => {
-      const inital = basicObject();
-
-      inital.obj.obj.circ = inital;
+      const inital = buildCircularObject();
 
       const ob = new Observable(inital);
 
