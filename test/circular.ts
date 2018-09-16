@@ -13,22 +13,22 @@ import { basicObject, basicArray } from './artifacts';
 
 const expect = Chai.expect;
 
-xdescribe('watch(Function) >> ', () => {
-    it('to scalar >> ', () => {
-        const c = {
-            a: {
-                b: {
-                    c: null
-                }
-            }
-        };
+// xdescribe('watch(Function) >> ', () => {
+//     it('to scalar >> ', () => {
+//         const c = {
+//             a: {
+//                 b: {
+//                     c: null
+//                 }
+//             }
+//         };
 
-        c.a.b.c = c;
-        const a = c.a;
-        const b = a.b;
+//         c.a.b.c = c;
+//         const a = c.a;
+//         const b = a.b;
 
-        set(a, '', {
+//         set(a, '', {
 
-        });
-    });
-});
+//         });
+//     });
+// });

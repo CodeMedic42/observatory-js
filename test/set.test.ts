@@ -153,7 +153,7 @@ xdescribe('Set(value: any, path: string | string[]) >> ', () => {
     describe('value: array', () => { });
 
     describe('Level 1 >> ', () => {
-        xdescribe('path: string', () => {
+        describe('path: string', () => {
             it('returns scalar >> ', () => {
                 const inital = basicObject();
                 const ob = new Observable(inital);
@@ -185,7 +185,7 @@ xdescribe('Set(value: any, path: string | string[]) >> ', () => {
             });
         });
 
-        xdescribe('path: array', () => {
+        describe('path: array', () => {
             it('returns scalar >> ', () => {
                 const inital = basicObject();
                 const ob = new Observable(inital);
@@ -219,7 +219,7 @@ xdescribe('Set(value: any, path: string | string[]) >> ', () => {
     });
 
     describe('Level 2 >> ', () => {
-        xdescribe('path: string', () => {
+        describe('path: string', () => {
             it('returns scalar >> ', () => {
                 const inital = basicObject();
                 const ob = new Observable(inital);
@@ -251,7 +251,7 @@ xdescribe('Set(value: any, path: string | string[]) >> ', () => {
             });
         });
 
-        xdescribe('path: array', () => {
+        describe('path: array', () => {
             it('returns scalar >> ', () => {
                 const inital = basicObject();
                 const ob = new Observable(inital);
@@ -285,7 +285,7 @@ xdescribe('Set(value: any, path: string | string[]) >> ', () => {
     });
 
     describe('Level 3 >> ', () => {
-        xdescribe('path: string', () => {
+        describe('path: string', () => {
             it('returns scalar >> ', () => {
                 const inital = basicObject();
                 const ob = new Observable(inital);
@@ -296,7 +296,7 @@ xdescribe('Set(value: any, path: string | string[]) >> ', () => {
                 expect(observed.toJS()).to.deep.equal(inital.obj.obj.num);
             });
 
-            it('returns array item >> ', () => {
+            xit('returns array item >> ', () => {
                 const inital = basicObject();
                 const ob = new Observable(inital);
 
@@ -307,7 +307,7 @@ xdescribe('Set(value: any, path: string | string[]) >> ', () => {
             });
         });
 
-        xdescribe('path: array', () => {
+        describe('path: array', () => {
             it('returns scalar >> ', () => {
                 const inital = basicObject();
                 const ob = new Observable(inital);
@@ -318,7 +318,7 @@ xdescribe('Set(value: any, path: string | string[]) >> ', () => {
                 expect(observed.toJS()).to.deep.equal(inital.obj.obj.num);
             });
 
-            it('returns array item >> ', () => {
+            xit('returns array item >> ', () => {
                 const inital = basicObject();
                 const ob = new Observable(inital);
 

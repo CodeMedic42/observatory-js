@@ -29,13 +29,17 @@ function debug(context, ...args) {
     }
 }
 
-function teststrap(initalValue, target, watchTarget, newValue, from = null) {
+function teststrap(initalValue, target, watchTarget, newValue, from = null, initalOb = null) {
     return function test() {
         // debug(this, 'watch(Function)', 'indirect change', 'through object change', 'from scalar', 'to scalar');
         // debug(this, 'watch(Function)', 'direct change', 'from scalar', 'to scalar');
-        const ob = new Observable(initalValue);
+        const ob = initalOb != null ? initalOb : new Observable(initalValue);
 
-        const spy = Sinon.spy();
+        const spy = Sinon.spy((() => {
+            // if (target === from) {
+            debugger;
+            // }
+        }));
 
         const targetDiff = from != null ? from : replace(target, watchTarget, '');
 
@@ -97,11 +101,13 @@ function teststrap(initalValue, target, watchTarget, newValue, from = null) {
         expect(parentSpy.callCount).to.equal(1);
         expect(parentSpy.args[0][0]).to.deep.equal(finalRootValue);
         expect(parentSpy.args[0][1]).to.equal(from != null ? from : target);
+
+        stopParent();
     };
 }
 
-xdescribe('watch(callback) >> ', () => {
-    describe('direct change >> ', () => {
+describe('watch(callback) >> ', () => {
+    xdescribe('direct change >> ', () => {
         describe('from scalar >> ', () => {
             it('to null >> ', teststrap(true, '', '', null));
             it('to scalar >> ', teststrap(true, '', '', 42));
@@ -128,20 +134,29 @@ xdescribe('watch(callback) >> ', () => {
     describe('indirect change >> ', () => {
         describe('through object change >> ', () => {
             describe('from scalar >> ', () => {
-                it('to null >> ', teststrap(basicObject(), 'str', '', null));
-                it('to scalar >> ', teststrap(basicObject(), 'str', '', 42));
-                it('to object >> ', teststrap(basicObject(), 'str', '', { foo: 'bar' }));
-                it('to array >> ', teststrap(basicObject(), 'str', '', [42, null, 'test']));
+                xit('to null >> ', teststrap(basicObject(), 'str', '', null));
+                xit('to scalar >> ', teststrap(basicObject(), 'str', '', 42));
+                xit('to object >> ', teststrap(basicObject(), 'str', '', { foo: 'bar' }));
+                xit('to array >> ', teststrap(basicObject(), 'str', '', [42, null, 'test']));
             });
 
-            describe('from object >> ', () => {
+            describe('deep >> ', () => {
+                describe('from scalar >> ', () => {
+                    xit('to null >> ', teststrap(basicObject(), 'obj.obj.str', '', null));
+                    xit('to scalar >> ', teststrap(basicObject(), 'obj.obj.str', '', 42));
+                    xit('to object >> ', teststrap(basicObject(), 'obj.obj.str', '', { foo: 'bar' }));
+                    xit('to array >> ', teststrap(basicObject(), 'obj.obj.str', '', [42, null, 'test']));
+                });
+            });
+
+            xdescribe('from object >> ', () => {
                 it('to null >> ', teststrap(basicObject(), 'obj', '', null));
                 it('to scalar >> ', teststrap(basicObject(), 'obj', '', 42));
                 it('to object >> ', teststrap(basicObject(), 'obj', '', { foo: 'bar' }));
                 it('to array >> ', teststrap(basicObject(), 'obj', '', [42, null, 'test']));
             });
 
-            describe('from arrary >> ', () => {
+            xdescribe('from arrary >> ', () => {
                 it('to null >> ', teststrap(basicObject(), 'arr', '', null));
                 it('to scalar >> ', teststrap(basicObject(), 'arr', '', 42));
                 it('to object >> ', teststrap(basicObject(), 'arr', '', { foo: 'bar' }));
@@ -149,7 +164,7 @@ xdescribe('watch(callback) >> ', () => {
             });
         });
 
-        describe('through array change >>', () => {
+        xdescribe('through array change >>', () => {
             describe('from scalar >> ', () => {
                 it('to null >> ', teststrap(basicArray(), '0', '', null));
                 it('to scalar >> ', teststrap(basicArray(), '0', '', 42));
@@ -175,19 +190,49 @@ xdescribe('watch(callback) >> ', () => {
 });
 
 describe('watch(path, callback) >> ', () => {
-    xdescribe('direct change >> ', () => {
-        describe('from scalar >> ', () => {
+    describe('direct change >> ', () => {
+        xdescribe('from scalar >> ', () => {
             it('to null >> ', teststrap(basicObject(), 'num', 'num', null));
             it('to scalar >> ', teststrap(basicObject(), 'num', 'num', 42));
             it('to object >> ', teststrap(basicObject(), 'num', 'num', { foo: 'bar' }));
             it('to array >> ', teststrap(basicObject(), 'num', 'num', [42, null, 'test']));
         });
+
+        xdescribe('deep >> ', () => {
+            describe('from scalar >> ', () => {
+                it('to null >> ', teststrap(basicObject(), 'obj.obj.num', 'obj.obj.num', null));
+                xit('to scalar >> ', teststrap(basicObject(), 'obj.obj.num', 'obj.obj.num', 42));
+                xit('to object >> ', teststrap(basicObject(), 'obj.obj.num', 'obj.obj.num', { foo: 'bar' }));
+                xit('to array >> ', teststrap(basicObject(), 'obj.obj.num', 'obj.obj.num', [42, null, 'test']));
+            });
+        });
     });
 
-    describe('indirect change >> ', () => {
+    xdescribe('indirect change >> ', () => {
         describe('through circular obj >> ', () => {
             describe('from scalar >> ', () => {
                 it('to scalar >> ', teststrap(buildCircularObject(), 'obj.obj.circ.num', '', 42, 'num'));
+            });
+        });
+    });
+
+    describe('de-circularize >> ', () => {
+        describe('from scalar >> ', () => {
+            it('to scalar >> ', () => {
+                const initialValue = buildCircularObject();
+
+                const ob = new Observable(initialValue)
+
+                // teststrap(initialValue, 'obj.obj.circ.num', '', 42, 'num', ob)();
+
+                const newOb = basicObject();
+
+                initialValue.obj.obj.circ = newOb;
+
+                // ob.set('obj.obj.circ', initialValue.obj.obj.circ);
+                ob.set('obj.obj.circ', newOb);
+
+                teststrap(initialValue, 'obj.obj.circ.num', '', 42, 'obj.obj.circ.num', ob)();
             });
         });
     });

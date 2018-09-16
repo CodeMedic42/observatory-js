@@ -6,7 +6,7 @@ import { basicObject, basicArray, buildCircularObject } from './artifacts';
 
 const expect = Chai.expect;
 
-describe('Constructor(value: any) >> ', () => {
+xdescribe('Constructor(value: any) >> ', () => {
   describe('Valid data >> ', () => {
     it('null', () => {
       const ob = new Observable(null);

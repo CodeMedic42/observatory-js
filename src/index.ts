@@ -60,14 +60,14 @@ class Watch {
         let childUnsub = null;
 
         if (this.path.length <= nextIndex) {
-            unsub = source.listen('change', (context, value, from) => {
+            unsub = source.listen('change', (updateContext, value, from) => {
                 this.callback(value, from);
             });
         } else {
             const nextId = this.path[nextIndex];
             let previous = undefined;
 
-            unsub = source.listen('change', (value) => {
+            unsub = source.listen('change', (updateContext, value, from) => {
                 const child = value[nextId];
 
                 if (child === previous) {
@@ -453,7 +453,7 @@ class Source extends events.EventEmitter {
     public set(value: simpleTypes, path: string[]): Source {
         const source: Source = this._get(path, true);
 
-        source._set(Symbol('procSym'), value);
+        source._set(Symbol('procSym'), new Source(value));
 
         this.cleanUp();
 
